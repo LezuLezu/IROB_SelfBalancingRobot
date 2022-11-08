@@ -1,3 +1,5 @@
+//https://circuitdigest.com/microcontroller-projects/arduino-based-self-balancing-robot
+
 #include "I2Cdev.h"
 #include <PID_v1.h>
 #include "MPU6050_6Axis_MotionApps20.h"
@@ -18,11 +20,15 @@ Quaternion q;
 VectorFloat gravity;
 float ypr[3];
 
-double setpoint= 184.8; 
+// middelpunt met afwijking naar voren
+double setpoint= 189; 
 
-double Kp = 31;
-double Kd = 2.25;
-double Ki = 400; 
+//double Kp = 31;
+//double Kd = 2.25;
+//double Ki = 400; 
+double Kp = 50;
+double Ki = 0;
+double Kd = 0;
 
 double oldSetpoint = setpoint;
 
@@ -49,10 +55,15 @@ void setup() {
 
 	devStatus = mpu.dmpInitialize();
 
-	mpu.setXGyroOffset(14);
-	mpu.setYGyroOffset(-93);
-	mpu.setZGyroOffset(6);
-	mpu.setZAccelOffset(1322); 
+//  mpu.setXGyroOffset(14);
+//  mpu.setYGyroOffset(-93);
+//  mpu.setZGyroOffset(6);
+//  mpu.setZAccelOffset(1322); 
+
+	mpu.setXGyroOffset(-1);
+	mpu.setYGyroOffset(-91);
+	mpu.setZGyroOffset(10);
+	mpu.setZAccelOffset(1342); 
 
 	if (devStatus == 0) {
 		Serial.println(F("Enabling DMP..."));
@@ -99,28 +110,34 @@ void loop() {
     } else {
         pid.Compute();   
         Serial.println(input);
+        Serial.println(output);
 
-        if (input>150 && input<200){
+//        if (input<180 || input>190){
+//        if (input<150 && input>200)
 
-        if (output>0) Forward();
-        else if (output<0) Reverse();
+        //187.6; midden
+        //190 afwijking
+        // Achteruit of vooruit vallen
+        if (input<190 || input>191){
+          if (output<0) Forward();
+          else if (output>0) Reverse();
         }
         else Stop();
     }
 }
 
 void Forward() {
-  analogWrite(A1B,output);
+  analogWrite(A1B,output*-1);
   analogWrite(A1A,0);
-  analogWrite(B2A,output);
+  analogWrite(B2A,output*-1);
   analogWrite(B1A,0);
   Serial.println("F");
 }
 
 void Reverse() {
-  analogWrite(A1A,output*-1);
+  analogWrite(A1A,output);
   analogWrite(A1B,0);
-  analogWrite(B1A,output*-1);
+  analogWrite(B1A,output);
   analogWrite(B2A,0);
   Serial.println("R");
 }
