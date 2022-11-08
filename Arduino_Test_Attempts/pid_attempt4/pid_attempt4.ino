@@ -26,9 +26,10 @@ double setpoint= 189;
 //double Kp = 31;
 //double Kd = 2.25;
 //double Ki = 400; 
+// bij stellen: https://www.youtube.com/watch?v=cjSw7sc2JKk&t=1s&ab_channel=CircuitDigest
 double Kp = 50;
-double Ki = 0;
-double Kd = 0;
+double Kd = 2;
+double Ki = 250;
 
 double oldSetpoint = setpoint;
 
