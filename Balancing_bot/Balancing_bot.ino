@@ -1,16 +1,23 @@
-//https://circuitdigest.com/microcontroller-projects/arduino-based-self-balancing-robot
+/* ======================================================================================
 
-#include "I2Cdev.h"
-#include <PID_v1.h>
-#include "MPU6050_6Axis_MotionApps20.h"
-#include <Wire.h>
+IROB SELFBALANCING BOT
 
-#define A1B 3 // Brown
+Self balancing bot gemaakt door: Zoe en Sabrina
+Code gebaseerd op tutorial: https://circuitdigest.com/microcontroller-projects/arduino-based-self-balancing-robot
+
+====================================================================================== */
+
+#include "I2Cdev.h" // 12C Device lib
+#include <PID_v1.h> // PID lib
+#include "MPU6050_6Axis_MotionApps20.h" // MPU lib
+#include <Wire.h> // Wire lib, voor communicatie met MPU
+
+#define A1B 3 // Bruin
 #define A1A 5 // Orange
-#define B1A 9 // Green
-#define B2A 6 // Yellow
+#define B1A 9 // Groen
+#define B2A 6 // Geel
 
-MPU6050 mpu(0x68, &Wire);
+MPU6050 mpu(0x68, &Wire); // Maak MPU object met wire connectie 
 
 bool dmpReady = false;
 uint8_t devStatus;
@@ -20,12 +27,9 @@ Quaternion q;
 VectorFloat gravity;
 float ypr[3];
 
-// middelpunt met afwijking naar voren
+// middelpunt met afwijking naar voren om gewicht van batterij te kunnen compenseren
 double setpoint= 187; 
 
-//double Kp = 31;
-//double Kd = 2.25;
-//double Ki = 400; 
 // bij stellen: https://www.youtube.com/watch?v=cjSw7sc2JKk&t=1s&ab_channel=CircuitDigest
 double Kp = 51;
 double Kd = 2.25;
@@ -34,11 +38,11 @@ double Ki = 200;
 double oldSetpoint = setpoint;
 
 double input, output;
-PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+// PID object waar doormiddel van input een output pwm waarden wordt gegeneerd. Setpoint is het middelpunt
+PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT); 
 
 volatile bool mpuInterrupt = false;
-void dmpDataReady()
-{
+void dmpDataReady() {
     mpuInterrupt = true;
 }
 
@@ -55,6 +59,8 @@ void setup() {
 	Serial.println(mpu.testConnection() ? F("MPU6050 connection successful") : F("MPU6050 connection failed"));
 
 	devStatus = mpu.dmpInitialize();
+
+// Oude ofset waardes van vorige calibraties:
 
 //  mpu.setXGyroOffset(14);
 //  mpu.setYGyroOffset(-93);
@@ -86,9 +92,8 @@ void setup() {
 		pid.SetOutputLimits(-255, 255);  
 	} else {
 		// ERROR!
-		// 1 = initial memory load failed
-		// 2 = DMP configuration updates failed
-		// (if it's going to break, usually the code will be 1)
+		// 1 = gefaald te laden
+		// 2 = DMP configuratie update gefaald
 		Serial.print(F("DMP Initialization failed (code "));
 		Serial.print(devStatus);
 		Serial.println(F(")"));
@@ -105,35 +110,33 @@ void setup() {
 }
 
 void loop() {
-    if (!dmpReady) return;
+  if (!dmpReady) return;
 
-    if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
-        mpu.dmpGetQuaternion(&q, fifoBuffer);
-        mpu.dmpGetGravity(&gravity, &q);
-        mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
+  // MPU FIFO buffer met alle uitgelezen waardes:
+  if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
+    mpu.dmpGetQuaternion(&q, fifoBuffer);
+    mpu.dmpGetGravity(&gravity, &q);
+    mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
 
-        input = ypr[1] * 180/M_PI + 180;
-    } else {
-        pid.Compute();   
-        Serial.println(input);
-        Serial.println(output);
+    input = ypr[1] * 180/M_PI + 180;
+  } else {
+    // Bereken PID
+    pid.Compute();  
+    Serial.println(input);
+    Serial.println(output); 
 
-//        if (input<180 || input>190){
-//        if (input<150 && input>200)
-
-        //187.6; midden
-        //190 afwijking
-        // Achteruit of vooruit vallen
-        if (input<187 || input>187){
-          if (output<0) Forward();
-          else if (output>0) Reverse();
-        }
-        else Stop();
+    //187 midden met afwijking
+    // < Achteruit of vooruit > vallen
+    if (input<187 || input>187){
+      if (output<0) Forward();
+      else if (output>0) Reverse();
     }
+    else Stop();
+  }
 }
 
 void Forward() {
-  analogWrite(A1B,output*-1);
+  analogWrite(A1B,output*-1); // Conventeer negatieve waarde naar bruikbare pwm
   analogWrite(A1A,0);
   analogWrite(B2A,output*-1);
   analogWrite(B1A,0);
