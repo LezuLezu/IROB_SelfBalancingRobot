@@ -38,7 +38,7 @@ double Ki = 200;
 double oldSetpoint = setpoint;
 
 double input, output;
-// PID object waar doormiddel van input een output pwm waarden wordt gegeneerd. Setpoint is het middelpunt
+// PID object waar doormiddel van input een output pwm waarden wordt gegenereerd. Setpoint is het middelpunt
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT); 
 
 volatile bool mpuInterrupt = false;
@@ -112,7 +112,7 @@ void setup() {
 void loop() {
   if (!dmpReady) return;
 
-  // MPU FIFO buffer met alle uitgelezen waardes:
+  // MPU alle uitgelezen waardes:
   if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) {
     mpu.dmpGetQuaternion(&q, fifoBuffer);
     mpu.dmpGetGravity(&gravity, &q);
