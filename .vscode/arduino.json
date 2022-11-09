@@ -1,6 +1,0 @@
-{
-    "configuration": "cpu=atmega328old",
-    "board": "arduino:avr:nano",
-    "port": "COM6",
-    "sketch": "Arduino_Test_Attempts\\motor_and_gy\\motor_and_gy.ino"
-}
